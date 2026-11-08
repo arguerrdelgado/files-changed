@@ -7,8 +7,8 @@ A Claude Code mod that adds a card to each reply listing the files Claude change
 ```
 4 files changed  +61 −73
 ▸ Hero.tsx  +38 −64  features/landing/components
-▸ PhoneIcon.tsx  +14 −0  components/ui  new
-▸ old-logo.svg  +0 −1  public  deleted
+▸ PhoneIcon.tsx  +14 −0  new  components/ui
+▸ old-logo.svg  +0 −1  deleted  public
 Outside the project (1)
 ▸ MEMORY.md  +9 −8  ~/.claude/memory
 ```

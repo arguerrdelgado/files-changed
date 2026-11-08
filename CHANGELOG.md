@@ -2,6 +2,12 @@
 
 All notable changes to this project are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.4.1] - 2026-11-08
+
+### Fixed
+
+- A long folder outside the project wrapped and left the file's status on a line of its own. The status now comes before the folder, and a deep folder outside the project is cut in the middle (`/tmp/claude-1000/…/scratchpad`).
+
 ## [0.4.0] - 2026-11-08
 
 ### Added
@@ -55,6 +61,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 - A side panel with the files changed in the last reply.
 
+[0.4.1]: https://github.com/arguerrdelgado/files-changed/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/arguerrdelgado/files-changed/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/arguerrdelgado/files-changed/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/arguerrdelgado/files-changed/compare/v0.1.0...v0.2.0

@@ -57,7 +57,7 @@ export function renderCard(elements: CardElements, row: RenderElement, props: Ca
   )
 }
 
-/** One file: `▸ name  +a −r  folder  status`, and its diff under it when open. */
+/** One file: `▸ name  +a −r  status  folder`, the folder last since it may wrap; its diff under it when open. */
 function renderRow(elements: CardElements, props: CardProps, change: FileChange, name: string, folder: string): RenderElement {
   const { Box, Text, Button, Code } = elements
   const { labels } = props
@@ -70,10 +70,10 @@ function renderRow(elements: CardElements, props: CardProps, change: FileChange,
         <Button key={`card:${key}`} label={`${isOpen ? '▾' : '▸'} ${name}`} plain onPress={() => props.onToggleRow(key)} />
         {!change.isBinary && <Text color={ADDED_COLOR}>+{change.added}</Text>}
         {!change.isBinary && <Text color={REMOVED_COLOR}>−{change.removed}</Text>}
-        {folder !== '' && <Text dimColor>{folder}</Text>}
         {change.status === 'added' && <Text color={ADDED_COLOR}>{labels.newFile}</Text>}
         {change.status === 'deleted' && <Text color={REMOVED_COLOR}>{labels.deletedFile}</Text>}
         {change.isBinary && <Text dimColor>{labels.binaryFile}</Text>}
+        {folder !== '' && <Text dimColor>{folder}</Text>}
       </Box>
       {isOpen && change.patch !== '' && <Code source={change.patch} format="diff" path={change.path} />}
     </Box>

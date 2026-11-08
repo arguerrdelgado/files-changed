@@ -7,8 +7,8 @@ Un mod de Claude Code que añade a cada respuesta una tarjeta con los archivos q
 ```
 4 archivos cambiados  +61 −73
 ▸ Hero.tsx  +38 −64  features/landing/components
-▸ PhoneIcon.tsx  +14 −0  components/ui  nuevo
-▸ old-logo.svg  +0 −1  public  eliminado
+▸ PhoneIcon.tsx  +14 −0  nuevo  components/ui
+▸ old-logo.svg  +0 −1  eliminado  public
 Fuera del proyecto (1)
 ▸ MEMORY.md  +9 −8  ~/.claude/memory
 ```

@@ -145,6 +145,12 @@ describe('paths', () => {
     expect(displayPath('/tmp/a/x.txt', '/proj', '/home/me')).toEqual({ name: 'x.txt', folder: '/tmp/a', isOutside: true })
     expect(displayPath('/projection/x.txt', '/proj')).toEqual({ name: 'x.txt', folder: '/projection', isOutside: true })
   })
+
+  test('a deep folder outside it keeps its first two levels and its last', async () => {
+    expect(displayPath('/tmp/claude-1000/-home-me/183f/scratchpad/f.txt', '/proj').folder).toBe('/tmp/claude-1000/…/scratchpad')
+    expect(displayPath('/home/me/.claude/projects/-home-me/memory/m.md', '/proj', '/home/me').folder).toBe('~/.claude/…/memory')
+    expect(displayPath('/a/b/c/d/x', '/proj').folder).toBe('/a/b/c/d')
+  })
 })
 
 describe('reply tracker', () => {
