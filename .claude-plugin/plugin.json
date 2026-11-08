@@ -1,8 +1,11 @@
 {
   "name": "files-changed",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Shows a card in each Claude Code reply with the files it changed and their added/removed lines",
   "author": { "name": "Arnulfo Guerrero Delgado" },
+  "homepage": "https://github.com/arguerrdelgado/files-changed",
+  "repository": "https://github.com/arguerrdelgado/files-changed",
   "license": "MIT",
+  "keywords": ["diff", "changes", "files"],
   "types": "./types/index.d.ts"
 }
