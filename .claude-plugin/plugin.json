@@ -1,0 +1,6 @@
+{
+  "name": "files-changed",
+  "version": "0.1.0",
+  "description": "Panel con los archivos modificados en la última respuesta y sus +/−",
+  "types": "./types/index.d.ts"
+}
