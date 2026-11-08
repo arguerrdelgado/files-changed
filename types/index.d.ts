@@ -6,13 +6,14 @@ export type FileChange = {
   patch: string
 }
 
-export type TurnChanges = { files: FileChange[]; isRunning: boolean }
+export type Summaries = Record<string, FileChange[]>
 
 declare module 'claude-code' {
   interface PluginState {
     'files-changed': {
-      turn: Shaped<TurnChanges>
-      expanded: string | null
+      turnFiles: Shaped<FileChange[]>
+      summaries: Shaped<Summaries>
+      open: string | null
     }
   }
 }

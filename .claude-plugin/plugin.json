@@ -1,6 +1,8 @@
 {
   "name": "files-changed",
-  "version": "0.1.0",
-  "description": "Panel con los archivos modificados en la última respuesta y sus +/−",
+  "version": "0.2.0",
+  "description": "Shows a card in each Claude Code reply with the files it changed and their added/removed lines",
+  "author": { "name": "Arnulfo Guerrero Delgado" },
+  "license": "MIT",
   "types": "./types/index.d.ts"
 }

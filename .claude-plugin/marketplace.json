@@ -1,0 +1,6 @@
+{
+  "name": "files-changed",
+  "owner": { "name": "Arnulfo Guerrero Delgado" },
+  "description": "A card in each Claude Code reply with the files it changed",
+  "plugins": [{ "name": "files-changed", "source": "./" }]
+}
