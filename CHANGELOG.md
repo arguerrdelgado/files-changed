@@ -2,6 +2,24 @@
 
 All notable changes to this project are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] - 2026-11-08
+
+### Added
+
+- The card's language is an option, `en` (the default) or `es`, set in `/config`.
+- Deleted files are marked `deleted`, and binary files are listed, marked `binary`, with no line counts.
+- Files outside the project are grouped under "Outside the project", with `~` for the home folder.
+- A command that creates more than 50 untracked files counts the rest in an "and N more files" line.
+
+### Changed
+
+- A file's status (`new`, `deleted`, `binary`) is shown after its counts and folder.
+- Saved state changed shape (`v2`); cards saved by an earlier version are not shown.
+
+### Fixed
+
+- A change made while another tool call was running, as with subagents working at the same time, could be counted twice.
+
 ## [0.3.0] - 2026-11-08
 
 ### Changed
@@ -37,6 +55,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 - A side panel with the files changed in the last reply.
 
+[0.4.0]: https://github.com/arguerrdelgado/files-changed/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/arguerrdelgado/files-changed/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/arguerrdelgado/files-changed/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/arguerrdelgado/files-changed/releases/tag/v0.1.0

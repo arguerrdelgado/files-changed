@@ -1,20 +1,30 @@
-/**
- * How the card shows a path: the file name, and its folder relative to `cwd`.
- * A folder outside `cwd` with more than two parts keeps only its last two
- * (`/tmp/a/b/c` → `…/b/c`), so a row fits on one line.
- */
-export function displayPath(path: string, cwd: string): { name: string; folder: string } {
-  const base = cwd.endsWith('/') ? cwd : `${cwd}/`
-  const shown = path.startsWith(base) ? path.slice(base.length) : path
-  const cut = shown.lastIndexOf('/')
-  if (cut < 0) return { name: shown, folder: '' }
+/** How the card shows a path. */
+export type ShownPath = {
+  name: string
+  /** The folder: relative to the session's folder, under `~` in the home folder, else absolute. */
+  folder: string
+  /** True when the file is outside the session's folder. */
+  isOutside: boolean
+}
 
-  const folder = shown.slice(0, cut)
-  const parts = folder.split('/').filter(Boolean)
-  const isLongAbsolute = folder.startsWith('/') && parts.length > 2
+/** Splits a path into the file name and the folder the card shows. */
+export function displayPath(path: string, cwd: string, home?: string): ShownPath {
+  const cut = path.lastIndexOf('/')
+  const name = path.slice(cut + 1)
+  const folder = path.slice(0, Math.max(cut, 0))
 
-  return {
-    name: shown.slice(cut + 1),
-    folder: isLongAbsolute ? `…/${parts.slice(-2).join('/')}` : folder,
-  }
+  const inside = relativeTo(folder, cwd)
+  if (inside !== undefined) return { name, folder: inside, isOutside: false }
+
+  const inHome = home ? relativeTo(folder, home) : undefined
+
+  return { name, folder: inHome === undefined ? folder : `~${inHome && `/${inHome}`}`, isOutside: true }
+}
+
+/** `folder` relative to `base` ('' for `base` itself), or undefined when it is not inside it. */
+function relativeTo(folder: string, base: string): string | undefined {
+  const root = base.replace(/\/+$/, '')
+  if (folder === root) return ''
+
+  return folder.startsWith(`${root}/`) ? folder.slice(root.length + 1) : undefined
 }

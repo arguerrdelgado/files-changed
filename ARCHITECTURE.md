@@ -37,12 +37,15 @@ Dependencies point inward: `core` never imports from the layers around it, so it
 | `src/core/diff.ts` | Turns a structured patch or a git diff into changes |
 | `src/core/paths.ts` | Splits a path into the name and folder the card shows |
 | `src/core/reply-tracker.ts` | Decides which message block of a reply gets its card |
+| `src/core/bash-windows.ts` | Keeps each change counted once when Bash calls and file writes overlap |
+| `src/core/serial.ts` | Runs async tasks one at a time |
 | `src/adapters/edit-write.ts` | Reads an Edit or Write result |
+| `src/adapters/bash.ts` | Watches a Bash call between two git snapshots |
 | `src/adapters/git.ts` | Takes git snapshots and diffs them; every git command the mod runs is here |
 | `src/adapters/store.ts` | Everything the mod saves in the session's state |
 | `src/ui/card.tsx` | Draws the card |
-| `src/ui/labels.ts` | Every text the card shows |
-| `types/index.d.ts` | `FileChange`, `CardsByBlock` and the state contract |
+| `src/ui/labels.ts` | Every text the card shows, in each language |
+| `types/index.d.ts` | `FileChange`, `ReplyChanges`, `CardsByBlock` and the state contract |
 
 ## Lifecycle of a reply
 
@@ -74,6 +77,9 @@ Subagent turns (`e.agentId` set) are not replies: what their tools change counts
 - **All state in one file.** Claude Code's scanner requires each state value to be read and written in the file that declares it, so `store.ts` is the only file that touches state.
 - **Functions that receive `$` are `function` declarations.** The scanner follows `$` across an import only into a function declaration.
 - **`git stash create` for Bash.** It records the working tree as a commit without touching the user's work, so the diff of two snapshots is exactly what one command changed, even when there were uncommitted changes before it. The cost is up to four git commands before and after each Bash call, inside a repository; one outside.
+- **Overlapping calls count each change once.** Subagents launched together run their tools at the same time, so one Bash call's before-and-after window can hold another call's changes. `BashWindows` diffs each closing window from the oldest snapshot still open, or from the last snapshot a window closed on when that is newer, so the first window to close over a change reports it and no other does. Files an Edit or Write changed inside a window are left to those tools. Windows close one at a time (`serial`), so each diff starts from a current point.
+- **Files outside the project are shown, not hidden.** A write outside the session's folder is exactly what someone auditing an agent wants to see, so those files get their own group, with `~` for the home folder.
+- **The language is a plugin option.** `userConfig.language` in `plugin.json` is a picker in `/config`; `register` receives it and `labelsFor` picks the texts, English by default.
 - **Hex colors.** VS Code does not draw Claude Code's theme color names (`diffAdded`).
 
 ## What the mod runs on your machine
@@ -89,7 +95,7 @@ git -c core.quotepath=off diff --no-renames --no-ext-diff --no-textconv <before>
 git -c core.quotepath=off diff --no-index --no-ext-diff --no-textconv -- /dev/null <new file>
 ```
 
-All are read-only except `git stash create`, which writes an unreferenced commit to `.git/objects` (git's garbage collector removes it later) and, like `git status`, may refresh the index's cached file stats. `--no-ext-diff` and `--no-textconv` keep git from running diff programs a repository configures. Claude Code runs git with repository hooks off. The mod makes no network requests and writes no files of its own. `tests/adapters.test.ts` checks this exact list.
+All are read-only except `git stash create`, which writes an unreferenced commit to `.git/objects` (git's garbage collector removes it later) and, like `git status`, may refresh the index's cached file stats. `--no-ext-diff` and `--no-textconv` keep git from running diff programs a repository configures. Claude Code runs git with repository hooks off. It reads one environment variable, `HOME`, to show paths under `~`. The mod makes no network requests and writes no files of its own. `tests/adapters.test.ts` checks this exact list.
 
 ## Extending it
 
@@ -99,7 +105,7 @@ All are read-only except `git stash create`, which writes an unreferenced commit
 2. Add a `tool.call` hook in `hooks/register.tsx` that calls it and passes the changes to `addTurnChanges`.
 3. Test the adapter in `tests/adapters.test.ts`, and the whole flow in `tests/plugin.test.tsx` if it needs Claude Code's events.
 
-**Another language:** change the texts in `src/ui/labels.ts`.
+**Another language:** add an entry to `LANGUAGES` in `src/ui/labels.ts` and its code to `options` under `userConfig.language` in `.claude-plugin/plugin.json`.
 
 **A change to what is saved:** change the shape in `types/index.d.ts` and its atom in `src/adapters/store.ts`. When the stored value's form changes, change the atom's `shape` tag too: a value saved under another tag is then read as the atom's initial value instead of being misread.
 

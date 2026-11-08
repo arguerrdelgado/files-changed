@@ -1,6 +1,7 @@
 import type { EngineInterface } from 'claude-code'
 
-import type { FileChange } from '../../types'
+import type { FileChange, ReplyChanges } from '../../types'
+import { NO_CHANGES } from '../core/changes'
 import { changesFromDiff } from '../core/diff'
 
 /**
@@ -17,7 +18,7 @@ import { changesFromDiff } from '../core/diff'
  * `--no-textconv` keep git from running diff programs a repository configures.
  */
 
-/** New untracked files listed per command at most, so a command that creates thousands stays fast. */
+/** New untracked files read per command at most, so a command that creates thousands stays fast; the rest are counted. */
 const MAX_NEW_UNTRACKED_FILES = 50
 
 /** The working tree at one moment. */
@@ -44,26 +45,25 @@ export async function takeSnapshot($: EngineInterface): Promise<Snapshot | undef
   return { root, tree, untracked: new Set(untracked.split('\0').filter(Boolean)) }
 }
 
-/** What changed in the repository since `before`. */
-export async function changesSince($: EngineInterface, before: Snapshot): Promise<FileChange[]> {
-  const after = await takeSnapshot($)
-  if (!after || after.root !== before.root) return []
+/** What changed in the repository between two snapshots of it. */
+export async function changesBetween($: EngineInterface, before: Snapshot, after: Snapshot): Promise<ReplyChanges> {
+  if (after.root !== before.root) return NO_CHANGES
 
   const { root } = after
-  const changes: FileChange[] = []
+  const files: FileChange[] = []
   if (after.tree !== before.tree) {
     const diff = await git($, ['diff', '--no-renames', '--no-ext-diff', '--no-textconv', before.tree, after.tree], root)
-    changes.push(...changesFromDiff(diff ?? '', root))
+    files.push(...changesFromDiff(diff ?? '', root))
   }
 
   const created = [...after.untracked].filter(file => !before.untracked.has(file))
   for (const file of created.slice(0, MAX_NEW_UNTRACKED_FILES)) {
     // `--no-index` exits 1 when the files differ, which is always the case here.
     const diff = await git($, ['diff', '--no-index', '--no-ext-diff', '--no-textconv', '--', '/dev/null', file], root, [0, 1])
-    changes.push(...changesFromDiff(diff ?? '', root).map(change => ({ ...change, isNew: true })))
+    files.push(...changesFromDiff(diff ?? '', root).map(change => ({ ...change, status: 'added' as const })))
   }
 
-  return changes
+  return { files, unlisted: Math.max(created.length - MAX_NEW_UNTRACKED_FILES, 0) }
 }
 
 /** Runs one git command; its output, or undefined when it exits with a code not in `okExitCodes`. */

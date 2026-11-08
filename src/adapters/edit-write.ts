@@ -14,7 +14,7 @@ export function changeFromEditOrWrite(result: EditOrWriteResult): FileChange | u
 
   const isNew = 'type' in result && result.type === 'create'
 
-  return changeFromHunks(result.filePath, hunksOf(result, isNew), isNew)
+  return changeFromHunks(result.filePath, hunksOf(result, isNew), isNew ? 'added' : 'modified')
 }
 
 /** The result's patch; a Write that creates a file may report none, and then every line is new. */

@@ -1,4 +1,5 @@
-import type { CardsByBlock, FileChange } from '../../types'
+import type { CardsByBlock, ReplyChanges } from '../../types'
+import { hasChanges } from './changes'
 
 /**
  * Decides which message block of a reply gets its card.
@@ -20,9 +21,9 @@ export class ReplyTracker {
   /** Blocks first drawn since the reply started, in that order, with their latest text. */
   readonly #replyBlocks = new Map<string, string>()
   /** The reply's changes, waiting for its last block to be drawn. */
-  #pending: { answer: string; changes: readonly FileChange[] } | undefined
+  #pending: { answer: string; changes: ReplyChanges } | undefined
   /** Cards claimed while drawn, not saved yet. */
-  readonly #unsaved = new Map<string, FileChange[]>()
+  readonly #unsaved = new Map<string, ReplyChanges>()
 
   /** A new reply starts. */
   startTurn(): void {
@@ -39,7 +40,7 @@ export class ReplyTracker {
     if (belongsToThisReply) this.#replyBlocks.set(id, text)
 
     if (this.#pending && this.#replyBlocks.has(id) && endsAnswer(text, this.#pending.answer)) {
-      this.#unsaved.set(id, [...this.#pending.changes])
+      this.#unsaved.set(id, this.#pending.changes)
       this.#pending = undefined
     }
   }
@@ -48,8 +49,8 @@ export class ReplyTracker {
    * The reply ended. Returns the block that gets its card now, or undefined
    * when there is nothing to show or its last block is not drawn yet.
    */
-  endTurn(answer: string, changes: readonly FileChange[]): string | undefined {
-    if (changes.length === 0) return undefined
+  endTurn(answer: string, changes: ReplyChanges): string | undefined {
+    if (!hasChanges(changes)) return undefined
 
     const blocks = [...this.#replyBlocks].reverse()
     const last = blocks.find(([, text]) => endsAnswer(text, answer))
@@ -60,7 +61,7 @@ export class ReplyTracker {
   }
 
   /** The changes the card on this block shows, if it has one. */
-  changesFor(id: string, saved: CardsByBlock): readonly FileChange[] | undefined {
+  changesFor(id: string, saved: CardsByBlock): ReplyChanges | undefined {
     return saved[id] ?? this.#unsaved.get(id)
   }
 

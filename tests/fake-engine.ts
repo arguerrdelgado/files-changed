@@ -17,11 +17,12 @@ const hunk = (lines: string[]) => ({
   lines,
 })
 
-export function fakeEngine(on: any, options: { git?: Git; onBash?: () => void } = {}): void {
+export function fakeEngine(on: any, options: { git?: Git; onBash?: (command: string) => void | Promise<void> } = {}): void {
   const git = options.git ?? outsideRepository
 
   on('session.start', (_: unknown, e: any) => ({ cwd: e.cwd }))
   on('session.cwd', () => ({ value: '/proj' }))
+  on('env.get', (_: unknown, e: any) => ({ value: e.name === 'HOME' ? '/home/me' : undefined }))
   on('turn.start', (_: unknown, e: any) => ({ turnId: e.turnId }))
   on('turn.complete', (_: unknown, e: any) => ({ text: e.answer ?? '' }))
   on('process.run', (_: unknown, e: any) => ({ value: { ...git(e.argv.slice(3).join(' ')), stderr: '' } }))
@@ -29,9 +30,9 @@ export function fakeEngine(on: any, options: { git?: Git; onBash?: () => void } 
     const { Text } = $.ui.resolve(e)
     return h(Text, null, e.props.text)
   })
-  on('tool.call', (_: unknown, e: any) => {
+  on('tool.call', async (_: unknown, e: any) => {
     if (e.tool === 'Bash') {
-      options.onBash?.()
+      await options.onBash?.(e.command)
       return { result: { stdout: '', stderr: '' } }
     }
     if (e.tool === 'Write')

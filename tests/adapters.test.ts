@@ -17,13 +17,13 @@ describe('edit and write', () => {
       replaceAll: false,
     }
 
-    expect(changeFromEditOrWrite(result)).toMatchObject({ path: '/p/a.ts', added: 2, removed: 1, isNew: false })
+    expect(changeFromEditOrWrite(result)).toMatchObject({ path: '/p/a.ts', added: 2, removed: 1, status: 'modified' })
   })
 
   test('a write that creates a file with no patch counts each line once', async () => {
     const result = { type: 'create' as const, filePath: '/p/n.txt', content: 'a\nb\n', structuredPatch: [], originalFile: null }
 
-    expect(changeFromEditOrWrite(result)).toMatchObject({ added: 2, removed: 0, isNew: true })
+    expect(changeFromEditOrWrite(result)).toMatchObject({ added: 2, removed: 0, status: 'added' })
   })
 
   test('a write held for review changed nothing', async () => {
@@ -57,7 +57,7 @@ describe('git', () => {
       if (args.startsWith('ls-files')) return { exitCode: 0, stdout: hasRun ? 'n.txt\0' : '' }
       return { exitCode: args.startsWith('diff --no-index') ? 1 : 0, stdout: '' }
     }
-    fakeEngine(on, { git: repo, onBash: () => (hasRun = true) })
+    fakeEngine(on, { git: repo, onBash: () => void (hasRun = true) })
     await $.session.start({ cwd: '/proj', surface: 'vscode', isInteractive: true })
     await $.tool.call(bash)
 

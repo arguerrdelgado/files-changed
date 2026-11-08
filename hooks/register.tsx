@@ -1,7 +1,7 @@
 import type { Register } from 'claude-code'
 
+import { noteFileWritten, watchBash } from '../src/adapters/bash'
 import { changeFromEditOrWrite } from '../src/adapters/edit-write'
-import { changesSince, takeSnapshot } from '../src/adapters/git'
 import {
   addTurnChanges,
   readCards,
@@ -11,8 +11,10 @@ import {
   saveCards,
   toggleOpenRow,
 } from '../src/adapters/store'
+import { hasChanges } from '../src/core/changes'
 import { ReplyTracker } from '../src/core/reply-tracker'
 import { renderCard } from '../src/ui/card'
+import { labelsFor } from '../src/ui/labels'
 
 /**
  * Wires Claude Code's events to the mod's modules. The hooks are listed in
@@ -24,7 +26,9 @@ import { renderCard } from '../src/ui/card'
 // drawn gets its card.
 const tracker = new ReplyTracker()
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  const labels = labelsFor(options.language)
+
   // 1. A reply starts: save the cards claimed while drawn, forget the last reply's changes.
   on('turn.start', async ($, e, next) => {
     if (e.agentId === undefined) {
@@ -42,7 +46,10 @@ export const register: Register = on => {
     if (ran.deny !== undefined || ran.isError) return ran
 
     const change = changeFromEditOrWrite(ran.result)
-    if (change) await addTurnChanges($, [change])
+    if (change) {
+      noteFileWritten(change.path)
+      await addTurnChanges($, { files: [change], unlisted: 0 })
+    }
 
     return ran
   })
@@ -52,18 +59,8 @@ export const register: Register = on => {
   on('tool.call', { tool: 'Bash' }, async ($, e, next) => {
     if (e.run_in_background) return next(e)
 
-    const before = await takeSnapshot($).catch(error => {
-      $.ui.log(`files-changed: git snapshot failed: ${String(error)}`, { to: 'debug' })
-      return undefined
-    })
-    const ran = await next(e)
-    if (before === undefined || ran.deny !== undefined) return ran
-
-    const changes = await changesSince($, before).catch(error => {
-      $.ui.log(`files-changed: git diff failed: ${String(error)}`, { to: 'debug' })
-      return []
-    })
-    if (changes.length > 0) await addTurnChanges($, changes)
+    const { ran, changes } = await watchBash($, () => next(e))
+    if (hasChanges(changes)) await addTurnChanges($, changes)
 
     return ran
   })
@@ -85,12 +82,14 @@ export const register: Register = on => {
     tracker.blockDrawn(e.requestId, e.props.text)
     const changes = tracker.changesFor(e.requestId, await readCards($))
     const row = await next(e)
-    if (changes === undefined || changes.length === 0) return row
+    if (changes === undefined || !hasChanges(changes)) return row
 
     return renderCard($.ui.resolve(e), row, {
       blockId: e.requestId,
       changes,
       cwd: await $.session.cwd(),
+      home: await $.env.get('HOME'),
+      labels,
       openRow: await readOpenRow($),
       onToggleRow: key => toggleOpenRow($, key),
     })
